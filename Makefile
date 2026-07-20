@@ -2,13 +2,15 @@
 TMP = .tmp
 RTL = rtl
 TB = tb
-TEST = test
+TEST = firmware
 
-CC = riscv64-unknown-elf-gcc
-CFLAGS = -O2 -mabi=ilp32 -march=rv32i -nostdlib -Ttext 0x00000000
-C_SRC = $(TEST)/start.S $(TEST)/main.c
+CC_PREFIX = riscv64-unknown-elf
+CC = $(CC_PREFIX)-gcc
+CC_LINK = $(TEST)/linker.ld
+CFLAGS = -O3 -mabi=ilp32 -march=rv32im -nostdlib -nostartfiles -T $(CC_LINK) -mno-relax
+C_SRC = $(TEST)/start.S $(wildcard $(TEST)/*.c)
 C_OUT = $(TMP)/firmware.elf
-OBJ = riscv64-unknown-elf-objcopy
+OBJ = $(CC_PREFIX)-objcopy
 OBJFLAGS = -O binary
 OBJ_OUT = $(TMP)/firmware.bin
 HEX_OUT = $(TMP)/firmware.hex
@@ -18,13 +20,12 @@ SIM_VCD = $(TMP)/simulation.vcd
 VV_FLAGS = -g2012 -DFIRMWARE_HEX='"$(HEX_OUT)"' -DSIMULATION_VCD='"$(SIM_VCD)"'
 VV_OUT = $(TMP)/sim.vvp
 
-# Declare targets as phony so they always run
-.PHONY: all test clean
+.PHONY: all build test clean
 
 # Default target
-all: test
+all: build
 
-test:
+build:
 	@echo "\n=== Compiling source files to hex ===\n"
 	mkdir -p $(TMP)
 	$(CC) $(CFLAGS) $(C_SRC) -o $(C_OUT) # compile to elf
@@ -34,6 +35,7 @@ test:
 	@echo "\n=== Compiling Verilog ===\n"
 	iverilog $(VV_FLAGS) -o $(VV_OUT) $(VERILOG_SRC)
 
+test: build
 	@echo "\n=== Running simulation ===\n"
 	vvp $(VV_OUT)
 
@@ -43,5 +45,5 @@ wave:
 
 # Cleanup
 clean:
-	@echo "=== Cleaning temp directory ==="
+	@echo "\n=== Cleaning temp directory ===\n"
 	@rm -rf $(TMP)
