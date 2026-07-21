@@ -1,6 +1,6 @@
 `timescale 1ns/1ps
 
-module tb;
+module soc_tb;
     reg clk = 0;
     reg resetn = 0;
     always #5 clk = ~clk;

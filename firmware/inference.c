@@ -38,8 +38,7 @@ void ssm_step_sw(const ssm_weights_t *weights, ssm_state_t *state,
         {
             // 1. Complex Multiplication: A_bar * state_{t-1}
             // Real component: (A_real * state_real) - (A_imag * state_imag)
-            int32_t m = (int32_t)weights->A.real[h][n];
-            int32_t prod_real = (m * state->real[h][n]) -
+            int32_t prod_real = ((int32_t)weights->A.real[h][n] * state->real[h][n]) -
                                 ((int32_t)weights->A.imag[h][n] * state->imag[h][n]);
 
             // Imaginary component: (A_real * state_imag) + (A_imag * state_real)

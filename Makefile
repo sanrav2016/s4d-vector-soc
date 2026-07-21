@@ -15,7 +15,9 @@ OBJFLAGS = -O binary
 OBJ_OUT = $(TMP)/firmware.bin
 HEX_OUT = $(TMP)/firmware.hex
 
-VERILOG_SRC = $(RTL)/* $(TB)/*
+RTL_SRC = $(RTL)/*
+SOC_TEST_TB = $(TB)/soc_tb.v
+ACCEL_TEST_TB = $(TB)/accelerator_tb.v
 SIM_VCD = $(TMP)/simulation.vcd
 VV_FLAGS = -g2012 -DFIRMWARE_HEX='"$(HEX_OUT)"' -DSIMULATION_VCD='"$(SIM_VCD)"'
 VV_OUT = $(TMP)/sim.vvp
@@ -32,10 +34,17 @@ build:
 	$(OBJ) $(OBJFLAGS) $(C_OUT) $(OBJ_OUT) # objcopy to bin
 	python3 -c "data = open('$(OBJ_OUT)', 'rb').read(); [print('%08x' % int.from_bytes(data[i:i+4], 'little')) for i in range(0, len(data), 4)]" > $(HEX_OUT) # convert to hex
 
+test-soc: build
 	@echo "\n=== Compiling Verilog ===\n"
-	iverilog $(VV_FLAGS) -o $(VV_OUT) $(VERILOG_SRC)
+	iverilog $(VV_FLAGS) -o $(VV_OUT) $(RTL_SRC) $(SOC_TEST_TB)
 
-test: build
+	@echo "\n=== Running simulation ===\n"
+	vvp $(VV_OUT)
+
+test-accelerator: build
+	@echo "\n=== Compiling Verilog ===\n"
+	iverilog $(VV_FLAGS) -o $(VV_OUT) $(RTL_SRC) $(ACCEL_TEST_TB)
+
 	@echo "\n=== Running simulation ===\n"
 	vvp $(VV_OUT)
 
