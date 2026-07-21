@@ -7,7 +7,7 @@ module soc_tb;
 
     initial begin
         $dumpfile(`SIMULATION_VCD);
-        $dumpvars(0, tb);
+        $dumpvars(0, soc_tb);
         resetn = 0;
         #20 resetn = 1;
         //#600000 $finish;
