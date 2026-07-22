@@ -18,5 +18,7 @@ module soc_tb;
         .clk(clk),
         .resetn(resetn)
     );
+
+    initial $readmemh(`FIRMWARE_HEX, soc.bram.memory);
     
 endmodule

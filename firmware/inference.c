@@ -1,6 +1,8 @@
+#include <stdint.h>
 #include "print.h"
 #include "inference.h"
 
+// Define memset since libc isn't linked
 void *memset(void *s, int c, unsigned int n)
 {
     unsigned char *p = s;
@@ -26,7 +28,6 @@ void ssm_init_state(ssm_state_t *state)
 void ssm_step_sw(const ssm_weights_t *weights, ssm_state_t *state,
                  const int16_t *input_u, int16_t *output_y)
 {
-
     for (int h = 0; h < D_MODEL; h++)
     {
         print_str("\n--- Channel h = ");
@@ -60,8 +61,27 @@ void ssm_step_sw(const ssm_weights_t *weights, ssm_state_t *state,
 
             y_accumulator += (c_prod >> 12);
         }
-
         // Final output value for channel h
         output_y[h] = (int16_t)y_accumulator;
+    }
+}
+
+#define SSM_STEP_EXEC() __asm volatile (".word 0x00000000B\n\t")
+
+void ssm_step_hw(const int16_t *input_u, int16_t *output_y) {
+    volatile uint32_t *u_bram = (volatile uint32_t *)(ACCEL_BRAM_BASE_ADDR + 0x400);
+    volatile uint32_t *y_bram = (volatile uint32_t *)(ACCEL_BRAM_BASE_ADDR + 0x420);
+
+    const uint32_t *u_packed = (const uint32_t *)input_u;
+    for (int i = 0; i < 8; i++) {
+        u_bram[i] = u_packed[i];
+    }
+
+    // Custom instruction
+    SSM_STEP_EXEC();
+
+    uint32_t *y_packed = (uint32_t *)output_y;
+    for (int i = 0; i < 8; i++) {
+        y_packed[i] = y_bram[i];
     }
 }

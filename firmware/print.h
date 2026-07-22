@@ -1,3 +1,5 @@
+#pragma once
+
 #define OUTPORT 0x10000000
 
 void print_chr(char ch);

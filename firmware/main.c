@@ -1,12 +1,32 @@
 #include <stdint.h>
 #include "print.h"
 #include "inference.h"
+#include <stddef.h>
 
 #define D_MODEL 16
 #define D_STATE 8
 
-// Replace these placeholders with your actual hardware base addresses
 #define MMIO_EXIT  0x20000000
+
+void *memcpy(void *dest, const void *src, unsigned int n) {
+    uint32_t *d = (uint32_t *)dest;
+    const uint32_t *s = (const uint32_t *)src;
+    
+    // Copy 4 bytes at a time
+    size_t words = n / 4;
+    for (size_t i = 0; i < words; i++) {
+        d[i] = s[i];
+    }
+    
+    // Copy remaining tail bytes if size isn't a multiple of 4
+    uint8_t *d_byte = (uint8_t *)(d + words);
+    const uint8_t *s_byte = (const uint8_t *)(s + words);
+    for (size_t i = 0; i < (n % 4); i++) {
+        d_byte[i] = s_byte[i];
+    }
+    
+    return dest;
+}
 
 int main() {
     static const ssm_weights_t weights = {
@@ -84,6 +104,26 @@ int main() {
         }
     };
 
+    print_str("Copying weights\n");
+
+    #ifdef ACCELERATION
+        // copy weights to accelerator bram
+        memcpy((void*)ACCEL_BRAM_BASE_ADDR, &weights, sizeof(ssm_weights_t));
+        //int32_t x_i = *(volatile uint32_t*)(ACCEL_BRAM_BASE_ADDR);
+        /*for (int i = 0; i < 16; i++) {
+            for (int j = 0; j < 4; j++) {
+                uint32_t x = *((volatile uint32_t*)(ACCEL_BRAM_BASE_ADDR + (i * 16) + (j * 4)));
+                uint16_t a = (uint16_t)(x & 0xFFFF);
+                uint16_t b = (uint16_t)(x >> 16);
+                print_int(a);
+                print_chr(' ');
+                print_int(b);
+                print_chr(' ');
+            }
+            print_chr('\n');
+        }*/
+    #endif
+
     static const int16_t input_stream[3][D_MODEL] = {
         {2048, 1024, 512, 256, 128, 64, 32, 16, -16, -32, -64, -128, -256, -512, -1024, -2048},
         {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 500,  500,  500,  500,  500,  500,  500,   500},
@@ -102,13 +142,11 @@ int main() {
         print_int(t);
         print_str(" ---\n");
         
+        #ifndef ACCELERATION
         ssm_step_sw(&weights, &state, input_stream[t], output_y);
-        
-        print_str("Sample State Ch0, State0: Real=");
-        print_int(state.real[0][0]);
-        print_str(", Imag=");
-        print_int(state.imag[0][0]);
-        print_str("\n");
+        #else
+        ssm_step_hw(input_stream[t], output_y);
+        #endif
         
         print_str("Output Feature Map y_t  : [");
         for (int h = 0; h < D_MODEL; h++) {

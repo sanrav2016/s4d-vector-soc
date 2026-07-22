@@ -12,6 +12,9 @@
 #define D_MODEL 16
 #define D_STATE 8
 
+#define ACCELERATION    
+#define ACCEL_BRAM_BASE_ADDR 0x40000000
+
 /*
 Per channel:
 Input dimensions 1x1 (input vector)
@@ -23,17 +26,6 @@ Output dimensions 1x1 (output vector)
 
 There are D_MODEL channels
 */
-
-// Memory-mapped registers for the custom SSM hardware block
-#define SSM_PERIPHERAL_BASE  0x40002000 
-#define SSM_REG_CTRL         ((volatile uint32_t*)(SSM_PERIPHERAL_BASE + 0x00))
-#define SSM_REG_STATUS       ((volatile uint32_t*)(SSM_PERIPHERAL_BASE + 0x04))
-#define SSM_REG_IN_PADDR     ((volatile uint32_t*)(SSM_PERIPHERAL_BASE + 0x08))
-#define SSM_REG_OUT_PADDR    ((volatile uint32_t*)(SSM_PERIPHERAL_BASE + 0x0C))
-
-#define SSM_CTRL_START       (1 << 0)
-#define SSM_STATUS_BUSY      (1 << 0)
-#define SSM_STATUS_DONE      (1 << 1)
 
 
 typedef struct {
@@ -56,3 +48,5 @@ void ssm_init_state(ssm_state_t *state);
 
 void ssm_step_sw(const ssm_weights_t *weights, ssm_state_t *state, 
                  const int16_t *input_u, int16_t *output_y);
+
+void ssm_step_hw(const int16_t *input_u, int16_t *output_y);
