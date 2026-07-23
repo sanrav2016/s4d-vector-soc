@@ -125,8 +125,8 @@ int main() {
     #endif
 
     static const int16_t input_stream[3][D_MODEL] = {
-        {2048, 1024, 512, 256, 128, 64, 32, 16, -16, -32, -64, -128, -256, -512, -1024, -2048},
         {1000, 1000, 1000, 1000, 1000, 1000, 1000, 1000, 500,  500,  500,  500,  500,  500,  500,   500},
+        {2048, 1024, 512, 256, 128, 64, 32, 16, -16, -32, -64, -128, -256, -512, -1024, -2048},
         {4096,    0, 4096,    0, 4096,    0, 4096,    0, -4096,   0, -4096,   0, -4096,   0, -4096,    0}
     };
 
@@ -148,7 +148,7 @@ int main() {
         ssm_step_hw(input_stream[t], output_y);
         #endif
         
-        print_str("Output Feature Map y_t  : [");
+        print_str("Output Feature Map y_t : [");
         for (int h = 0; h < D_MODEL; h++) {
             print_int(output_y[h]);
             if (h < D_MODEL - 1) {

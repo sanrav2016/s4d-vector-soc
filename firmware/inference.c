@@ -60,9 +60,12 @@ void ssm_step_sw(const ssm_weights_t *weights, ssm_state_t *state,
                              ((int32_t)weights->C.imag[h][n] * state->imag[h][n]);
 
             y_accumulator += (c_prod >> 12);
+            //print_int(y_accumulator);
+            //print_chr(' ');
         }
         // Final output value for channel h
         output_y[h] = (int16_t)y_accumulator;
+        //print_chr('\n');
     }
 }
 

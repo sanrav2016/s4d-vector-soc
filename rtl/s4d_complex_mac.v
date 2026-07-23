@@ -46,17 +46,19 @@ module s4d_complex_mac (
         end
     endgenerate
 
-    integer i;
     reg signed [31:0] accumulate;
     reg signed [31:0] prod_real;
     reg signed [31:0] prod_imag;
     reg signed [31:0] c_prod;
 
     // MAC runs in 8 cycles
-    always @(posedge clk) begin
+    always @(posedge clk or negedge resetn) begin
         if (!resetn || !enable) begin
             y <= 16'd0;
             accumulate <= 32'b0;
+            c_prod <= 32'b0;
+            prod_real <= 32'b0;
+            prod_imag <= 32'b0;
         end else if (enable) begin
             prod_real = (A_real[idx] * h_real[idx]) - (A_imag[idx] * h_imag[idx]);
             prod_imag = (A_real[idx] * h_imag[idx]) + (A_imag[idx] * h_real[idx]);

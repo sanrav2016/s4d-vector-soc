@@ -37,14 +37,16 @@ module accelerator_core #(
 );
 
     // 4 KB local RAM
-    reg signed [31:0] local_memory [0:(LOCAL_RAM_SIZE/4)-1];
+    reg [31:0] local_memory [0:(LOCAL_RAM_SIZE/4)-1];
 
     reg [2:0] idx;
     reg enable;
 
     wire signed [127:0] h_real_out [0:`D_MODEL - 1];
     wire signed [127:0] h_imag_out [0:`D_MODEL - 1];
-    wire signed [15:0] y_array [0:`D_MODEL - 1];
+    wire [15:0] y_array [0:`D_MODEL - 1];
+
+    wire [15:0] y_debug = y_array[0];
 
     reg ping_pong_counter = 0;
 
@@ -72,7 +74,8 @@ module accelerator_core #(
                     h_imag_a <= 128'b0;
                     h_real_b <= 128'b0;
                     h_imag_b <= 128'b0;
-                end else if (enable && idx == 3'd7) begin
+                end else if (pcpi_ready && idx == 3'd7) begin
+                    ping_pong_counter <= ~ping_pong_counter;
                     if (ping_pong_counter == 1'b0) begin
                         // Read A and latch new state into B
                         h_real_b <= h_real_out[i];
@@ -147,33 +150,31 @@ module accelerator_core #(
             accel_mem_rdata <= local_memory[accel_mem_addr[11:2]];
         end 
         // Accelerator internal logic is writing to Y
-        else if (!pcpi_ready && ssm_step && idx == 3'd7) begin
+        else if (pcpi_ready && idx == 3'd7) begin
             for (integer k = 0; k < `D_MODEL/2; k = k + 1) begin
-                local_memory[`Y_START + k] <= {y_array[2*k], y_array[2*k + 1]};
+                local_memory[`Y_START + k] <= {y_array[2*k + 1], y_array[2*k]};
             end
         end
     end
 
+    assign enable = !pcpi_ready && ssm_step;
+
     always @(posedge clk or negedge resetn) begin
         if (!resetn) begin
-            enable <= 1'b0;
             pcpi_wr <= 1'b0;
             pcpi_ready <= 1'b0;
             pcpi_wait <= 1'b0;
             idx <= 3'b0;
             ping_pong_counter <= 1'b0;
             accel_mem_ready <= 1'b0;
-        end else if (!pcpi_ready && ssm_step) begin
+        end else if (enable) begin
             if (idx == 3'd7) begin
                 pcpi_wr <= 1'b1;
                 pcpi_wait <= 1'b0;
                 pcpi_rd <= 32'b0; // success code
                 pcpi_ready <= 1'b1;
-                enable <= 1'b0;
-                ping_pong_counter <= ~ping_pong_counter;
             end else begin
                 pcpi_wait <= 1'b1;
-                enable <= 1'b1;
                 idx <= idx + 3'b1;
             end
         end else begin
