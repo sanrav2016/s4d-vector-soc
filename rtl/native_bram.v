@@ -1,3 +1,5 @@
+`define SIM_MODE
+
 module native_bram #(
     // 64 KB default
     // make sure to update start.S and linker.ld in firmware if changing
@@ -37,15 +39,19 @@ module native_bram #(
             // Intercept MMIO print address
             if (mem_addr == PRINT_ADDR && |mem_wstrb) begin
                 mem_ready <= 1;
+                `ifdef SIM_MODE
                 $write("%c", mem_wdata[7:0]);
                 $fflush();
+                `endif
             end
 
             // Intercept MMIO exit address
             else if (mem_addr == EXIT_ADDR && |mem_wstrb) begin
                 mem_ready <= 1;
+                `ifdef SIM_MODE
                 $display("Simulation Exit Requested");
                 $finish;
+                `endif
             end
 
             // Native BRAM access

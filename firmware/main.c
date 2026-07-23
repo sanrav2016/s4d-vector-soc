@@ -134,13 +134,13 @@ int main() {
     static int16_t output_y[D_MODEL];
 
     print_str("=== Starting C Fixed-Point SSM Inference Execution ===\n");
-
-    int m = 1;
+    uint32_t start_cycles, end_cycles;
+    __asm __volatile__ ("rdcycle %0" : "=r" (start_cycles));
 
     for (int t = 0; t < 3; t++) {
-        print_str("--- Timestep t = ");
+        /*print_str("--- Timestep t = ");
         print_int(t);
-        print_str(" ---\n");
+        print_str(" ---\n");*/
         
         #ifndef ACCELERATION
         ssm_step_sw(&weights, &state, input_stream[t], output_y);
@@ -148,17 +148,21 @@ int main() {
         ssm_step_hw(input_stream[t], output_y);
         #endif
         
-        print_str("Output Feature Map y_t : [");
+        /*print_str("Output Feature Map y_t : [");
         for (int h = 0; h < D_MODEL; h++) {
             print_int(output_y[h]);
             if (h < D_MODEL - 1) {
                 print_str(", ");
             }
         }
-        print_str("]\n");
+        print_str("]\n");*/
     }
 
+    __asm __volatile__ ("rdcycle %0" : "=r" (end_cycles));
     print_str("\n=== Inference Complete ===\n");
+    print_str("=== Total Cycles: ");
+    print_int(end_cycles - start_cycles);
+    print_str(" ===\n");
 
     // Signal terminal shutdown to simulator block
     *(volatile int *)MMIO_EXIT = 1;

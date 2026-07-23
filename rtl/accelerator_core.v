@@ -14,7 +14,7 @@
 `define Y_START         (`WORDS_PER_MATRIX * 4 + 8)         // 264 (8 words = 16 x 16-bit)
 
 module accelerator_core #(
-    LOCAL_RAM_SIZE = 32'h0000_1000
+    parameter LOCAL_RAM_SIZE = 32'h0000_1000
 ) (
     input wire clk,
     input wire resetn,
@@ -133,6 +133,8 @@ module accelerator_core #(
     wire [6:0] opcode = pcpi_insn[6:0];
     wire [2:0] funct3 = pcpi_insn[14:12];
     wire ssm_step = pcpi_valid && (opcode == 7'b0001011) && (funct3 == 3'b000);
+
+    integer k;
     
     // Port A
     always @(posedge clk) begin
@@ -151,7 +153,7 @@ module accelerator_core #(
         end 
         // Accelerator internal logic is writing to Y
         else if (pcpi_ready && idx == 3'd7) begin
-            for (integer k = 0; k < `D_MODEL/2; k = k + 1) begin
+            for (k = 0; k < `D_MODEL/2; k = k + 1) begin
                 local_memory[`Y_START + k] <= {y_array[2*k + 1], y_array[2*k]};
             end
         end

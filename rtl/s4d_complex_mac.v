@@ -52,7 +52,7 @@ module s4d_complex_mac (
     reg signed [31:0] c_prod;
 
     // MAC runs in 8 cycles
-    always @(posedge clk or negedge resetn) begin
+    always @(posedge clk) begin
         if (!resetn || !enable) begin
             y <= 16'd0;
             accumulate <= 32'b0;

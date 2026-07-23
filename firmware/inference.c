@@ -30,9 +30,9 @@ void ssm_step_sw(const ssm_weights_t *weights, ssm_state_t *state,
 {
     for (int h = 0; h < D_MODEL; h++)
     {
-        print_str("\n--- Channel h = ");
+        /*print_str("\n--- Channel h = ");
         print_int(h);
-        print_str(" ---\n");
+        print_str(" ---\n");*/
         int32_t y_accumulator = 0;
         int16_t u_t = input_u[h]; // Input vector scalar entry for channel h
         for (int n = 0; n < D_STATE; n++)
