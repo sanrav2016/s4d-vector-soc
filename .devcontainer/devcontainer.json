@@ -1,0 +1,8 @@
+{
+ "name": "IIC-OSIC-TOOLS",
+ "image": "hpretl/iic-osic-tools-devcontainer:latest",
+ "pullPolicy": "always",
+ "containerEnv": {
+    "DISPLAY": "localhost:0.0" // change to your X server IP address
+  }
+}
